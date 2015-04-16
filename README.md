@@ -3,6 +3,7 @@ Library for interfacing with [RohBot](https://github.com/Rohansi/RohBot) in C++
 
 ## Dependencies
   * [libwebsockets](https://github.com/davidgaleano/libwebsockets)
+  * [jsoncpp](https://github.com/open-source-parsers/jsoncpp)
 
 ## Usage example
 ```c++
@@ -70,3 +71,7 @@ int main(char** argv, int argc)
 	}
 }
 ```
+
+## Building
+
+Use CMake to generate the project, libwebsockets must also be built with OpenSSL support and linked manually.
