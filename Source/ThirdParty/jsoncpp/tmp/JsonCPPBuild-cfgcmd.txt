@@ -1,1 +1,0 @@
-cmd='C:/Program Files (x86)/CMake/bin/cmake.exe;-GVisual Studio 12 2013;C:/dev/rohbutt/repo/RohbotLibCPP/Source/ThirdParty/jsoncpp/src/JsonCPPBuild'
