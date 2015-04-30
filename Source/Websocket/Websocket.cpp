@@ -44,6 +44,16 @@ namespace RohbotLib
 			return false;
 			break;
 
+		case LWS_CALLBACK_DEL_POLL_FD:
+			websocketWrapper->_ClosedByRemote();
+			break;
+
+		case LWS_CALLBACK_ADD_POLL_FD:
+		case LWS_CALLBACK_SET_MODE_POLL_FD:
+		case LWS_CALLBACK_CLEAR_MODE_POLL_FD:
+		case LWS_CALLBACK_CLIENT_WRITEABLE:
+			break;
+
 		default:
 			break;
 		}
@@ -178,6 +188,8 @@ namespace RohbotLib
 			m_packets.pop();
 
 			callback(packet.data, packet.length);
+
+			free(packet.data);
 		}
 	}
 
@@ -214,16 +226,26 @@ namespace RohbotLib
 			return;
 
 		if (m_bufferPacket.data)
-			m_bufferPacket.data = (char*)realloc(m_bufferPacket.data, m_bufferPacket.length + length);
-		else
-			m_bufferPacket.data = (char*)malloc(length);
+		{
+			char* expandedDataBuffer = (char*)realloc(m_bufferPacket.data, m_bufferPacket.length + length + 1);
+			memcpy(expandedDataBuffer + m_bufferPacket.length, data, length);
 
-		memcpy(m_bufferPacket.data + m_bufferPacket.length, data, length);
-		m_bufferPacket.length += length;
+			m_bufferPacket.data = expandedDataBuffer;
+			m_bufferPacket.length += length;
+		}
+		else
+		{
+			m_bufferPacket.data = (char*)malloc(length);
+			m_bufferPacket.length = length;
+
+			memcpy(m_bufferPacket.data, data, length);
+		}
 
 		if (endOfPacket)
 		{
 			m_packets.push(m_bufferPacket);
+
+			m_bufferPacket = Webpacket();
 
 			m_bufferPacket.data = nullptr;
 			m_bufferPacket.length = 0;
