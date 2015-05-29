@@ -1,8 +1,10 @@
 #include "RohbotClient.hpp"
-#include <Windows.h>
 
 #include "../Packet/AuthPacket.hpp"
 #include "../Packet/ChatPacket.hpp"
+
+#include <chrono>
+#include <thread>
 
 #define CONNECT_TIMEOUT 500000
 
@@ -139,14 +141,14 @@ namespace RohbotLib
 
 		m_websocket.SendPacket(authPacket);
 
-		unsigned long startTime = GetTickCount();
+		auto startTime = std::chrono::high_resolution_clock::now();
 
-		while (!m_websocket.IsConnected() && GetTickCount() - startTime < CONNECT_TIMEOUT)
+		while (!m_websocket.IsConnected() && std::chrono::high_resolution_clock::now() - startTime < std::chrono::milliseconds(CONNECT_TIMEOUT))
 		{
-			Sleep(50);
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
-		while (!m_authenticated && GetTickCount() - startTime < CONNECT_TIMEOUT)
+		while (!m_authenticated && std::chrono::high_resolution_clock::now() - startTime < std::chrono::milliseconds(CONNECT_TIMEOUT))
 		{
 			m_websocket.Poll(
 				[&](char* data, int length)
@@ -155,7 +157,7 @@ namespace RohbotLib
 				}
 			);
 
-			Sleep(50);
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
 		if (!m_websocket.IsConnected())

@@ -1,5 +1,6 @@
 #include "websocket.hpp"
-#include <Windows.h>
+#include <chrono>
+#include <thread>
 
 #define CONNECT_TIMEOUT 5000
 
@@ -113,13 +114,13 @@ namespace RohbotLib
 
 		libwebsockets_set_external_user_space(m_socket, this);
 
-		long connectStartTime = GetTickCount();
+		auto connectStartTime = std::chrono::high_resolution_clock::now();
 
-		while (!m_connected && GetTickCount() - connectStartTime < CONNECT_TIMEOUT)
+		while (!m_connected && std::chrono::high_resolution_clock::now() - connectStartTime < std::chrono::milliseconds(CONNECT_TIMEOUT))
 		{
 			libwebsocket_service(m_context, 0);
 
-			Sleep(50);
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
 
 		if (!m_connected)
