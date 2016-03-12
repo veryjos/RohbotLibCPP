@@ -2,9 +2,9 @@
 
 #include <queue>
 #include <string>
-#include "../../ThirdParty/libwebsockets/lib/libwebsockets.h"
+#include "libwebsockets.h"
 
-#include "../Packet/BasePacket.hpp"
+#include "Packet/BasePacket.hpp"
 
 #include <functional>
 #include "json/json.h"
@@ -13,7 +13,7 @@ namespace RohbotLib
 {
 	class Websocket
 	{
-		friend int rohbot_websocket_protocol_callback(struct libwebsocket_context * context, struct libwebsocket *wsi, enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len);
+		friend int rohbot_websocket_protocol_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 	public:
 		Websocket();
@@ -50,8 +50,8 @@ namespace RohbotLib
 
 		Webpacket m_bufferPacket;
 
-		libwebsocket_context* m_context;
-		libwebsocket* m_socket;
+		lws_context* m_context;
+		lws* m_socket;
 
 		bool m_connected;
 

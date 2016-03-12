@@ -1,4 +1,5 @@
-#include "websocket.hpp"
+#include "Websocket.hpp"
+
 #include <chrono>
 #include <thread>
 
@@ -7,7 +8,7 @@
 namespace RohbotLib
 {
 	static void
-		log_callback(enum libwebsocket_log_severity severity,
+		log_callback(enum lws_log_levels severity,
 		const char *msg, ...)
 	{
 		va_list va;
@@ -19,12 +20,12 @@ namespace RohbotLib
 		va_end(va);
 	}
 
-	static int rohbot_websocket_protocol_callback(struct libwebsocket_context * context, struct libwebsocket *wsi, enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len)
+	int rohbot_websocket_protocol_callback(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 	{
 		if (wsi == nullptr)
 			return 0;
 
-		Websocket* websocketWrapper = (Websocket*)libwebsockets_get_external_user_space(wsi);
+		Websocket* websocketWrapper = (Websocket*)user;
 
 		switch (reason)
 		{
@@ -33,12 +34,12 @@ namespace RohbotLib
 			break;
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
-			websocketWrapper->_DeliverData((char*)in, len, libwebsocket_is_final_fragment(wsi) > 0);
+			websocketWrapper->_DeliverData((char*)in, len, lws_is_final_fragment(wsi) > 0);
 			break;
 
 		case LWS_CALLBACK_CLIENT_ESTABLISHED:
 			websocketWrapper->_ConnectionEstablished();
-			libwebsocket_callback_on_writable(context, wsi);
+			lws_callback_on_writable(wsi);
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONFIRM_EXTENSION_SUPPORTED:
@@ -49,12 +50,6 @@ namespace RohbotLib
 			websocketWrapper->_ClosedByRemote();
 			break;
 
-		case LWS_CALLBACK_ADD_POLL_FD:
-		case LWS_CALLBACK_SET_MODE_POLL_FD:
-		case LWS_CALLBACK_CLEAR_MODE_POLL_FD:
-		case LWS_CALLBACK_CLIENT_WRITEABLE:
-			break;
-
 		default:
 			break;
 		}
@@ -62,7 +57,7 @@ namespace RohbotLib
 		return 0;
 	}
 
-	static struct libwebsocket_protocols protocols[] = {
+	static struct lws_protocols protocols[] = {
 		{
 			"rohbot_websocket_protocol",
 			rohbot_websocket_protocol_callback,
@@ -90,35 +85,53 @@ namespace RohbotLib
 		if (m_context || m_socket)
 			return;
 
-		//libwebsockets_set_log_callback(log_callback);
-		m_context = libwebsocket_create_context(CONTEXT_PORT_NO_LISTEN, NULL, protocols, libwebsocket_internal_extensions,
-												nullptr, nullptr, nullptr, -1, -1, 0);
+		lws_context_creation_info info;
+		memset((void*)&info, 0, sizeof(info));
+
+		info.port = CONTEXT_PORT_NO_LISTEN;
+		info.protocols = protocols;
+		info.gid = -1;
+		info.uid = -1;
+		
+		m_context = lws_create_context(&info);
 
 		if (!m_context)
 		{
 			_Close();
 
-			throw std::exception("Failed to create websocket context.");
+			throw std::runtime_error("Failed to create websocket context.");
 		}
 
-		m_socket = libwebsocket_client_connect(m_context, host.c_str(), port, 2,
-											   endpoint.c_str(), host.c_str(), host.c_str(),
-											   protocols[0].name, -1);
+		lws_client_connect_info cinfo;
+		memset((void*)&cinfo, 0, sizeof(cinfo));
+
+		cinfo.context = m_context;
+		cinfo.address = host.c_str();
+		cinfo.port = 2;
+		cinfo.ssl_connection = 2;
+		cinfo.path = endpoint.c_str();
+		cinfo.host = host.c_str();
+		cinfo.origin = host.c_str();
+		cinfo.protocol = protocols[0].name;
+		cinfo.ietf_version_or_minus_one = -1;
+		cinfo.userdata = this;
+		cinfo.client_exts = nullptr;
+		cinfo.method = nullptr;
+
+		m_socket = lws_client_connect_via_info(&cinfo);
 
 		if (!m_socket)
 		{
 			_Close();
 
-			throw std::exception("Failed to connect to server.");
+			throw std::runtime_error("Failed to connect to server.");
 		}
-
-		libwebsockets_set_external_user_space(m_socket, this);
 
 		auto connectStartTime = std::chrono::high_resolution_clock::now();
 
 		while (!m_connected && std::chrono::high_resolution_clock::now() - connectStartTime < std::chrono::milliseconds(CONNECT_TIMEOUT))
 		{
-			libwebsocket_service(m_context, 0);
+			lws_service(m_context, 0);
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
@@ -127,7 +140,7 @@ namespace RohbotLib
 		{
 			_Close();
 
-			throw std::exception("Connection to server timed out.");
+			throw std::runtime_error("Connection to server timed out.");
 		}
 	}
 
@@ -152,10 +165,8 @@ namespace RohbotLib
 
 		memcpy(&paddedData[LWS_SEND_BUFFER_PRE_PADDING], data, length);
 
-		libwebsocket_write(m_socket,
+		lws_write(m_socket,
 			&paddedData[LWS_SEND_BUFFER_PRE_PADDING], length, LWS_WRITE_TEXT);
-
-		libwebsocket_callback_on_writable(m_context, m_socket);
 	}
 
 	void Websocket::SendJSON(const Json::Value& root)
@@ -181,7 +192,7 @@ namespace RohbotLib
 		if (!m_context || !m_socket)
 			return;
 
-		libwebsocket_service(m_context, 0);
+		lws_service(m_context, 0);
 
 		while (!m_packets.empty())
 		{
@@ -205,10 +216,7 @@ namespace RohbotLib
 		if (!m_context)
 			return;
 
-		if (m_socket)
-			libwebsocket_close_and_free_session(m_context, m_socket, LWS_CLOSE_STATUS_GOINGAWAY);
-
-		libwebsocket_context_destroy(m_context);
+		lws_context_destroy(m_context);
 
 		m_socket = nullptr;
 		m_context = nullptr;

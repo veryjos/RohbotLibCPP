@@ -5,12 +5,12 @@
 #include <memory>
 #include <vector>
 
-#include "../Packet/PacketHandler.hpp"
-#include "../Websocket/Websocket.hpp"
+#include "Packet/PacketHandler.hpp"
+#include "Websocket/Websocket.hpp"
 
-#include "../User/RohbotUser.hpp"
+#include "Room/Chatroom.hpp"
 
-#include "../Room/Chatroom.hpp"
+#include "User/RohbotUser.hpp"
 
 namespace RohbotLib
 {

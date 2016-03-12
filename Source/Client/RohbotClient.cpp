@@ -1,8 +1,9 @@
 #include "RohbotClient.hpp"
 
-#include "../Packet/AuthPacket.hpp"
-#include "../Packet/ChatPacket.hpp"
+#include "Packet/AuthPacket.hpp"
+#include "Packet/ChatPacket.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <thread>
 
@@ -33,7 +34,7 @@ namespace RohbotLib
 					m_loggedInCallback(*m_user.get());
 			}
 			else
-				throw std::exception("Auth failed!");
+				throw std::runtime_error("Auth failed!");
 		});
 
 		m_packetHandler.AddHandler("sysMessage", [&](const Json::Value &root)
@@ -161,7 +162,7 @@ namespace RohbotLib
 		}
 
 		if (!m_websocket.IsConnected())
-			throw std::exception("Connection timed out.");
+			throw std::runtime_error("Connection timed out.");
 	}
 
 	void RohbotClient::Disconnect()
@@ -272,10 +273,10 @@ namespace RohbotLib
 	void RohbotClient::Think()
 	{
 		if (!m_websocket.IsConnected())
-			throw std::exception("Not connected.");
+			throw std::runtime_error("Not connected.");
 
 		if (!m_authenticated)
-			throw std::exception("Not authenticated.");
+			throw std::runtime_error("Not authenticated.");
 
 		m_websocket.Poll([&](char* data, int length)
 		{

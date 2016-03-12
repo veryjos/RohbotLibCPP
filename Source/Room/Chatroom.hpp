@@ -6,6 +6,7 @@
 
 namespace RohbotLib
 {
+	class RohbotClient;
 	class RohbotUser;
 
 	class Chatroom

@@ -17,7 +17,7 @@ namespace RohbotLib
 		if (itr == m_packetHandlers.end())
 			m_packetHandlers[packetType] = handler;
 		else
-			throw std::exception("Packet type already registered.");
+			throw std::runtime_error("Packet type already registered.");
 	}
 
 	void PacketHandler::RemoveHandler(std::string packetType)

@@ -1,6 +1,6 @@
 #include "Chatroom.hpp"
-#include "../Client/RohbotClient.hpp"
-#include "../Packet/ChatPacket.hpp"
+#include "Client/RohbotClient.hpp"
+#include "Packet/ChatPacket.hpp"
 
 namespace RohbotLib
 {
