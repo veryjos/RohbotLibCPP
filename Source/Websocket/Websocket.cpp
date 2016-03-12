@@ -29,28 +29,142 @@ namespace RohbotLib
 
 		switch (reason)
 		{
+		case LWS_CALLBACK_ESTABLISHED:
+			printf("LWS_CALLBACK_ESTABLISHED\n");
+			break;
+
+		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
+			printf("LWS_CALLBACK_CLIENT_CONNECTION_ERROR\n");
+			break;
+
+		case LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH:
+			printf("LWS_CALLBACK_CLIENT_FILTER_PRE_ESTABLISH\n");
+			break;
+
 		case LWS_CALLBACK_CLOSED:
+			printf("LWS_CALLBACK_CLOSED\n");
 			websocketWrapper->_ClosedByRemote();
 			break;
 
+		case LWS_CALLBACK_CLOSED_HTTP:
+			printf("LWS_CALLBACK_CLOSED_HTTP\n");
+			break;
+
+		case LWS_CALLBACK_RECEIVE:
+			printf("LWS_CALLBACK_RECEIVE\n");
+			break;
+
+		case LWS_CALLBACK_CLIENT_RECEIVE_PONG:
+			printf("LWS_CALLBACK_CLIENT_RECEIVE_PONG\n");
+			break;
+
 		case LWS_CALLBACK_CLIENT_RECEIVE:
+			printf("LWS_CALLBACK_CLIENT_RECEIVE\n");
 			websocketWrapper->_DeliverData((char*)in, len, lws_is_final_fragment(wsi) > 0);
 			break;
 
+		case LWS_CALLBACK_HTTP:
+			printf("LWS_CALLBACK_HTTP\n");
+			break;
+
+		case LWS_CALLBACK_HTTP_BODY:
+			printf("LWS_CALLBACK_HTTP_BODY\n");
+			break;
+
+		case LWS_CALLBACK_HTTP_BODY_COMPLETION:
+			printf("LWS_CALLBACK_HTTP_BODY_COMPLETION\n");
+			break;
+
+		case LWS_CALLBACK_HTTP_WRITEABLE:
+			printf("LWS_CALLBACK_HTTP_WRITEABLE\n");
+			break;
+
+		case LWS_CALLBACK_HTTP_FILE_COMPLETION:
+			printf("LWS_CALLBACK_HTTP_FILE_COMPLETION\n");
+			break;
+
+		case LWS_CALLBACK_SERVER_WRITEABLE:
+			printf("LWS_CALLBACK_SERVER_WRITEABLE\n");
+			break;
+
+		case LWS_CALLBACK_FILTER_NETWORK_CONNECTION:
+			printf("LWS_CALLBACK_FILTER_NETWORK_CONNECTION\n");
+			break;
+
+		case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS:
+			printf("LWS_CALLBACK_OPENSSL_LOAD_EXTRA_CLIENT_VERIFY_CERTS\n");
+			break;
+
+		case LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS:
+			printf("LWS_CALLBACK_OPENSSL_LOAD_EXTRA_SERVER_VERIFY_CERTS\n");
+			break;
+
+		case LWS_CALLBACK_OPENSSL_CONTEXT_REQUIRES_PRIVATE_KEY:
+			printf("LWS_CALLBACK_OPENSSL_CONTEXT_REQUIRES_PRIVATE_KEY\n");
+			break;
+
+		case LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION:
+			printf("LWS_CALLBACK_OPENSSL_PERFORM_CLIENT_CERT_VERIFICATION\n");
+			break;
+
+		case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
+			printf("LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER\n");
+			break;
+
+		case LWS_CALLBACK_CONFIRM_EXTENSION_OKAY:
+			printf("LWS_CALLBACK_CONFIRM_EXTENSION_OKAY\n");
+			break;
+
+		case LWS_CALLBACK_PROTOCOL_INIT:
+			printf("LWS_CALLBACK_PROTOCOL_INIT\n");
+			break;
+
+		case LWS_CALLBACK_PROTOCOL_DESTROY:
+			printf("LWS_CALLBACK_PROTOCOL_DESTROY\n");
+			break;
+
+		case LWS_CALLBACK_WSI_CREATE:
+			printf("LWS_CALLBACK_WSI_CREATE\n");
+			break;
+
+		case LWS_CALLBACK_WSI_DESTROY:
+			printf("LWS_CALLBACK_WSI_DESTROY\n");
+			break;
+
+		case LWS_CALLBACK_ADD_POLL_FD:
+			printf("LWS_CALLBACK_ADD_POLL_FD\n");
+			break;
+
+		case LWS_CALLBACK_CHANGE_MODE_POLL_FD:
+			printf("LWS_CALLBACK_CHANGE_MODE_POLL_FD\n");
+			break;
+
+		case LWS_CALLBACK_UNLOCK_POLL:
+			printf("LWS_CALLBACK_UNLOCK_POLL\n");
+			break;
+
+		case LWS_CALLBACK_WS_PEER_INITIATED_CLOSE:
+			printf("LWS_CALLBACK_WS_PEER_INITIATED_CLOSE\n");
+			break;
+
 		case LWS_CALLBACK_CLIENT_ESTABLISHED:
+			printf("LWS_CALLBACK_CLIENT_ESTABLISHED\n");
 			websocketWrapper->_ConnectionEstablished();
 			lws_callback_on_writable(wsi);
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONFIRM_EXTENSION_SUPPORTED:
+			printf("LWS_CALLBACK_CLIENT_CONFIRM_EXTENSION_SUPPORTED\n");
 			return false;
 			break;
 
 		case LWS_CALLBACK_DEL_POLL_FD:
+			printf("LWS_CALLBACK_DEL_POLL_FD\n");
 			websocketWrapper->_ClosedByRemote();
 			break;
 
 		default:
+			printf("unknown what\n");
 			break;
 		}
 
@@ -92,7 +206,8 @@ namespace RohbotLib
 		info.protocols = protocols;
 		info.gid = -1;
 		info.uid = -1;
-		
+		info.options |= LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+
 		m_context = lws_create_context(&info);
 
 		if (!m_context)
@@ -107,7 +222,7 @@ namespace RohbotLib
 
 		cinfo.context = m_context;
 		cinfo.address = host.c_str();
-		cinfo.port = 2;
+		cinfo.port = port;
 		cinfo.ssl_connection = 2;
 		cinfo.path = endpoint.c_str();
 		cinfo.host = host.c_str();

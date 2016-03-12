@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.7)
-project (RohbotLibCPPProj)
+project (RohbotLibCPP)
 
 include(ExternalProject)
 
@@ -9,13 +9,6 @@ else()
 	set(CMAKE_CXX_FLAGS "/EHsc")
 endif()
 
-externalproject_add (JsonCPPBuild
-	PREFIX ${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp
-	GIT_REPOSITORY https://github.com/open-source-parsers/jsoncpp
-	CMAKE_ARGS -DJSONCPP_WITH_TESTS=OFF -DJSONCPP_POST_BUILD_UNITTEST=OFF -DJSONCPP_WITH_PKGCONFIG_SUPPORT=OFF -DJSONCPP_BUILD_SHARED_LIBS=OFF -DJSONCPP_BUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp/install
-	INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp/install
-	)
-
 externalproject_add (libwebsocketsBuild
 	PREFIX ${CMAKE_BINARY_DIR}/ThirdParty/libwebsockets
 	GIT_REPOSITORY https://github.com/warmcat/libwebsockets
@@ -23,13 +16,14 @@ externalproject_add (libwebsocketsBuild
 	INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdParty/libwebsockets/install
 	)
 
-include_directories (
-	${CMAKE_SOURCE_DIR}/Source
-	${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp/install/include
-	${CMAKE_BINARY_DIR}/ThirdParty/libwebsockets/install/include
-)
+externalproject_add (JsonCPPBuild
+	PREFIX ${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp
+	GIT_REPOSITORY https://github.com/open-source-parsers/jsoncpp
+	CMAKE_ARGS -DJSONCPP_WITH_TESTS=OFF -DJSONCPP_POST_BUILD_UNITTEST=OFF -DJSONCPP_WITH_PKGCONFIG_SUPPORT=OFF -DJSONCPP_BUILD_SHARED_LIBS=OFF -DJSONCPP_BUILD_STATIC_LIBS=ON -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp/install
+	INSTALL_DIR ${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp/install
+	)
 
-add_library (RohbotLibCPP
+add_library (RohbotLib
 	Source/Client/RohbotClient.cpp
 	Source/Client/RohbotClient.hpp
 
@@ -47,11 +41,6 @@ add_library (RohbotLibCPP
 
 	Source/Websocket/Websocket.cpp
 	Source/Websocket/Websocket.hpp
-)
-
-add_dependencies (RohbotLibCPP
-	JsonCPPBuild
-	libwebsocketsBuild
 )
 
 SOURCE_GROUP (Client
@@ -82,7 +71,21 @@ FILES Source/Websocket/Websocket.cpp
 	  Source/Websocket/Websocket.hpp
 )
 
-target_link_libraries (RohbotLibCPP
-	JsonCPP
-	libwebsockets	
+add_dependencies (RohbotLib
+	JsonCPPBuild
+	libwebsocketsBuild
 )
+
+target_link_libraries (RohbotLib
+	JsonCPP
+	websockets
+)
+
+target_include_directories (RohbotLib PUBLIC
+	${CMAKE_SOURCE_DIR}/Source
+	${CMAKE_BINARY_DIR}/ThirdParty/jsoncpp/install/include
+	${CMAKE_BINARY_DIR}/ThirdParty/libwebsockets/install/include
+)
+
+
+install (TARGETS RohbotLib DESTINATION lib)

@@ -132,7 +132,9 @@ namespace RohbotLib
 
 	void RohbotClient::Connect(std::string host, std::string endpoint, int port, std::string username, std::string password)
 	{
+		printf("Connecting..\n");
 		m_websocket.Connect(host, endpoint, port);
+		printf("Connected.\n");
 
 		AuthPacket authPacket;
 
@@ -148,6 +150,11 @@ namespace RohbotLib
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
+
+		if (m_websocket.IsConnected())
+			printf("Connected, authenticating..\n");
+		else
+			printf("Failed to connect, can't authenticate..\n");
 
 		while (!m_authenticated && std::chrono::high_resolution_clock::now() - startTime < std::chrono::milliseconds(CONNECT_TIMEOUT))
 		{
